@@ -6,7 +6,7 @@ import { getSession } from "~/lib/sessions";
 const getUserIdFromSession = async (request: Request) => {
   const cookieHeader = request.headers.get("Cookie") || ""; // Ensure cookieHeader is never null
   const session = await getSession(cookieHeader);
-  const userId = session.get("userId"); // Assuming you store userId in session
+  const userId = session.get("userId"); 
   return userId;
 };
 

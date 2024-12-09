@@ -14,17 +14,39 @@ datasource db {
 }
 
 model Recording {
-  id          Int        @id @default(autoincrement())
+  id          String       @id @default( uuid())
   fileUrl     String?    // Optional: store the URL if needed in the future
+  status      Status     @default(PENDING)
+  transcript  String?    
+  reviewed_transcript String?
+  helper_text String?
+  modified_by    User?    @relation("User_modified", fields: [modified_by_id], references: [id])
+  reviewed_by    User?    @relation("User_reviewed", fields: [reviewed_by_id], references: [id])
+  modified_by_id String?
+  reviewed_by_id String?
   createdAt   DateTime   @default(now())
-  userId      Int
-  user        User       @relation(fields: [userId], references: [id])
-  transcripts String?
+  modifiedAt  DateTime   @default(now())
+  updatedAt   DateTime   @default(now())
 }
 
 model User {
-  id          Int         @id @default(autoincrement())
+  id          String        @id @default( uuid())
+  role        Role        @default(USER)
   username    String
   email       String      @unique
-  recordings  Recording[]
+  modified Recording[] @relation("User_modified")
+  reviewed Recording[] @relation("User_reviewed")
+}
+
+enum Role {
+  USER
+  ADMIN
+  ANNOTATOR
+  REVIEWER
+}
+
+enum Status {
+  PENDING
+  MODIFIED
+  REVIEWED
 }
