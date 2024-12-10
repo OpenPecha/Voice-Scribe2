@@ -32,7 +32,7 @@ model Recording {
 model User {
   id          String        @id @default( uuid())
   role        Role        @default(USER)
-  username    String
+  username    String      @unique
   email       String      @unique
   modified Recording[] @relation("User_modified")
   reviewed Recording[] @relation("User_reviewed")
