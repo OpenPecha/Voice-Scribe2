@@ -33,17 +33,18 @@ async function uploadToS3(data: AsyncIterable<Uint8Array>, filename: string) {
 export const action: ActionFunction = async ({ request }) => {
   try {
     if (request.method === "POST") {
-      const formData = await unstable_parseMultipartFormData(
-        request,
-        async ({ data, filename, contentType }) => {
-          if (contentType && contentType.includes("audio")) {
-            return await uploadToS3(data, filename || "recording.webm");
-          }
-          return undefined;
-        }
-      );
+      // const formData = await unstable_parseMultipartFormData(
+      //   request,
+      //   async ({ data, filename, contentType }) => {
+      //     if (contentType && contentType.includes("audio")) {
+      //       return await uploadToS3(data, filename || "recording.webm");
+      //     }
+      //     return undefined;
+      //   }
+      // );
 
-      const fileUrl = formData.get("file") as string;
+      const formData = await request.formData();
+      //const fileUrl = formData.get("file") as string;
       const transcript = formData.get("transcript") as string;
       const modifiedById = formData.get("modifiedById") as string;
 
@@ -56,7 +57,7 @@ export const action: ActionFunction = async ({ request }) => {
           transcript,
           modified_by_id: modifiedById,
           status: "MODIFIED",
-          fileUrl: fileUrl, // Save the S3 URL in your database
+         // fileUrl: fileUrl, // Save the S3 URL in your database
         },
       });
 
