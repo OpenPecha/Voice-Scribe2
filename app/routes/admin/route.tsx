@@ -42,7 +42,7 @@ function AdminRoute() {
   const { user, users, recordings } = useLoaderData();
 
   return (
-    <div className="bg-gray-300 h-screen pt-3 overflow-scroll">
+    <div className="bg-gray-300 text-black h-screen pt-3 overflow-scroll">
       <div className="flex justify-center m-3">
         <Menubar>
           <MenubarMenu>

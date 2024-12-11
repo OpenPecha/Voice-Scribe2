@@ -41,23 +41,23 @@ export default function UsersPage({ users }: UsersPageProps) {
 
   return (
     <div>
-      <h1>Users</h1>
+      <h1 className="text-2xl font-bold text-center">Users</h1>
       <table className="table-auto w-full">
         <thead>
           <tr>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Actions</th>
+            <th className="px-4 py-2">Username</th>
+            <th className="px-4 py-2">Email</th>
+            <th className="px-4 py-2">Role</th>
+            <th className="px-4 py-2">Actions</th>
           </tr>
         </thead>
         <tbody>
           {users.map((user) => (
             <tr key={user.id}>
-              <td>{user.username}</td>
-              <td>{user.email}</td>
-              <td>{user.role}</td>
-              <td>
+              <td className="px-4 py-2">{user.username}</td>
+              <td className="px-4 py-2">{user.email}</td>
+              <td className="px-4 py-2">{user.role}</td>
+              <td className="px-4 py-2">
                 <fetcher.Form method="post" action="/routes/admin/users">
                   <input type="hidden" name="userId" value={user.id} />
                   <select
