@@ -2,6 +2,13 @@ import { json } from "@remix-run/node";
 import type { ActionFunction } from "@remix-run/node"; 
 import { prisma } from "~/db.server";
 
+/*************  ✨ Codeium Command ⭐  *************/
+/**
+ * Handles the incoming request to save a recording.
+ * 
+ * Extracts form data from the request, including status, transcript, 
+ * helper text, modified by ID, and reviewed by ID. Validates that 
+/******  26c31412-878f-48f6-84fc-325491a1a375  *******/
 export const action: ActionFunction = async ({ request }) => {
   try {
     const formData = await request.formData();

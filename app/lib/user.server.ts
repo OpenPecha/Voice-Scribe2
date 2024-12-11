@@ -1,19 +1,19 @@
 import { prisma } from "~/db.server";
 
-export const createUserIfNotExists = async (username: string) => {
-  let user = await prisma.user.findUnique({
-    where: { username: username }, 
+export const createUserIfNotExists = async (email: string) => {
+  let user;
+  user = await prisma.user.findUnique({
+    where: {
+      email: email,
+    },
   });
-
   if (!user) {
     user = await prisma.user.create({
       data: {
-        username: username,
-        email: `${username}@example.com`, 
-        role: "USER", 
+        username: email.split("@")[0],
+        email: email,
       },
     });
   }
-
   return user;
 };

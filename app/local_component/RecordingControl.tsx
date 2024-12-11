@@ -1,21 +1,25 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useFetcher } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import { FaMicrophone, FaPlayCircle } from "react-icons/fa";
 import { CiShuffle, CiRepeat } from "react-icons/ci";
 import WaveSurfer from "wavesurfer.js";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
-import { MyContextProvider, useMyContext } from '~/MyContext';
+import { MyContextProvider, useMyContext } from "~/MyContext";
 
 interface Recording {
   id: string;
   fileUrl: string | null;
-  transcript: string | null; 
-  reviewed_transcript: string | null; 
-  helper_text: string | null; 
+  transcript: string | null;
+  reviewed_transcript: string | null;
+  helper_text: string | null;
 }
 
-export default function RecordingControl({ recordings }: { recordings: Recording[] }) {
+export default function RecordingControl({
+  recordings,
+}: {
+  recordings: Recording[];
+}) {
   return (
     <MyContextProvider>
       <RecordingControlContent recordings={recordings} />
@@ -24,29 +28,28 @@ export default function RecordingControl({ recordings }: { recordings: Recording
 }
 
 function RecordingControlContent({ recordings }: { recordings: Recording[] }) {
-  const { 
-    isRecording, 
-    startRecording, 
-    stopRecording, 
-    resetRecording 
-  } = useMyContext();
+  const { isRecording, startRecording, stopRecording, resetRecording } =
+    useMyContext();
 
   const fetcher = useFetcher();
+  const { user } = useLoaderData();
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [transcript, setTranscript] = useState("");
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
+    null
+  );
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   const waveformRef = useRef<HTMLDivElement | null>(null);
   const waveSurferRef = useRef<WaveSurfer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [repeatMode, setRepeatMode] = useState<"none" | "one" | "all">("none");
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [waveColor, setWaveColor] = useState('blue');
+  const [waveColor, setWaveColor] = useState("blue");
   const [cursorVisible, setCursorVisible] = useState(true);
 
   useEffect(() => {
-    return () => { 
+    return () => {
       if (audioStream) {
         audioStream.getTracks().forEach((track) => track.stop());
       }
@@ -57,7 +60,7 @@ function RecordingControlContent({ recordings }: { recordings: Recording[] }) {
   }, [audioStream]);
 
   useEffect(() => {
-    if(audioURL && waveformRef.current) {
+    if (audioURL && waveformRef.current) {
       if (waveSurferRef.current) {
         waveSurferRef.current.destroy();
       }
@@ -68,8 +71,8 @@ function RecordingControlContent({ recordings }: { recordings: Recording[] }) {
         progressColor: "blue",
         height: 100,
         barWidth: 2,
-        cursorColor: cursorVisible ? "blue" :"transparent",
-        backend: "MediaElement"
+        cursorColor: cursorVisible ? "blue" : "transparent",
+        backend: "MediaElement",
       });
 
       waveSurferRef.current.load(audioURL);
@@ -150,14 +153,6 @@ function RecordingControlContent({ recordings }: { recordings: Recording[] }) {
     }
   };
 
-  const handleShuffle = () => {
-    if (recordings.length > 1) {
-      const randomIndex = Math.floor(Math.random() * recordings.length);
-      setCurrentIndex(randomIndex);
-      setAudioURL(recordings[randomIndex].fileUrl);
-    }
-  };
-
   const handleRepeat = () => {
     setRepeatMode((prevMode) =>
       prevMode === "none" ? "one" : prevMode === "one" ? "all" : "none"
@@ -167,36 +162,27 @@ function RecordingControlContent({ recordings }: { recordings: Recording[] }) {
   const handleSubmit = async () => {
     if (audioBlob && transcript) {
       const formData = new FormData();
-      const file = new File([audioBlob], `audio.${audioBlob.type.split('/')[1]}`, {
-        type: audioBlob.type,
-      });
+      const file = new File(
+        [audioBlob],
+        `audio.${audioBlob.type.split("/")[1]}`,
+        {
+          type: audioBlob.type,
+        }
+      );
       formData.append("file", file);
       formData.append("transcript", transcript);
+      formData.append("modifiedById", user.id);
 
-      try {
-        const response = await fetch("/app/api/saveRecording.tsx", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (response.ok) {
-          alert("Recording saved successfully!");
-          resetRecordingHandler(); // Reset the recording state
-        } else {
-          const errorText = await response.text();
-          alert(`Error saving recording: ${errorText}`);
-        }
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          alert("Error: " + error.message);
-        } else {
-          alert("An unknown error occurred.");
-        }
-      }
+      fetcher.submit(formData, {
+        method: "POST",
+        action: "/api/saveRecording",
+      });
     } else {
       alert("Please record audio and add a transcript.");
     }
   };
+
+  console.log("recoding UI");
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
@@ -206,43 +192,72 @@ function RecordingControlContent({ recordings }: { recordings: Recording[] }) {
             {!audioURL ? (
               <button
                 className={`p-6 rounded-full text-white shadow-lg ${
-                  isRecording ? "bg-red-500 hover:bg-red-600" 
-                  : "bg-green-500 hover:bg-green-600"
+                  isRecording
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-green-500 hover:bg-green-600"
                 }`}
-                onClick={isRecording ? stopRecordingHandler : startRecordingHandler}
+                onClick={
+                  isRecording ? stopRecordingHandler : startRecordingHandler
+                }
                 aria-label={isRecording ? "Stop Recording" : "Start Recording"}
               >
                 <FaMicrophone className="text-4xl" />
               </button>
             ) : (
               <>
-                <div ref={waveformRef} className="w-full max-w-xl h-40 rounded-lg bg-gray-300 shadow-md"></div>
+                <div
+                  ref={waveformRef}
+                  className="w-full max-w-xl h-40 rounded-lg bg-gray-300 shadow-md"
+                ></div>
                 <div className="flex justify-center space-x-6 mt-4">
-                  <button onClick={handleShuffle} className="flex justify-center items-center w-14 h-14 text-black rounded-full bg-gray-300 hover:bg-gray-400 shadow-md" aria-label="Shuffle" ><CiShuffle className="text-3xl" /></button>
-                  <button onClick={togglePlayPause} className="flex justify-center items-center w-14 h-14 text-black rounded-full bg-gray-300 hover:bg-gray-400 shadow-md" aria-label="Play/Pause" ><FaPlayCircle className="text-3xl" /></button>
-                  <button onClick={handleRepeat} className="flex justify-center items-center w-14 h-14 text-black rounded-full bg-gray-300 hover:bg-gray-400 shadow-md" aria-label="Repeat" ><CiRepeat className={`text-3xl ${
-                    repeatMode === "none"
-                      ? "text-black"
-                      : repeatMode === "one"
-                      ? "text-blue-500"
-                      : "text-green-500"
-                  }`}/></button>
+                  <button
+                    onClick={togglePlayPause}
+                    className="flex justify-center items-center w-14 h-14 text-black rounded-full bg-gray-300 hover:bg-gray-400 shadow-md"
+                    aria-label="Play/Pause"
+                  >
+                    <FaPlayCircle className="text-3xl" />
+                  </button>
+                  <button
+                    onClick={handleRepeat}
+                    className="flex justify-center items-center w-14 h-14 text-black rounded-full bg-gray-300 hover:bg-gray-400 shadow-md"
+                    aria-label="Repeat"
+                  >
+                    <CiRepeat
+                      className={`text-3xl ${
+                        repeatMode === "none"
+                          ? "text-black"
+                          : repeatMode === "one"
+                          ? "text-blue-500"
+                          : "text-green-500"
+                      }`}
+                    />
+                  </button>
                 </div>
-                <Button onClick={resetRecordingHandler}  className="p-4 max-w-sm text-lg text-white rounded-lg bg-red-500 hover:bg-red-600 focus:outline-none text-white">Reset</Button>
+                <Button
+                  onClick={resetRecordingHandler}
+                  className="p-4 max-w-sm text-lg text-white rounded-lg bg-red-500 hover:bg-red-600 focus:outline-none text-white"
+                >
+                  Reset
+                </Button>
               </>
             )}
           </div>
         </div>
         <div className="flex flex-col w-full sm:w-1/2 items-center sm:items-start space-y-6">
-          <Textarea className={`w-full max-w-xl p-6 text-black rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          <Textarea
+            className={`w-full max-w-xl p-6 text-black rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               isPlaying ? "caret-transparent" : ""
             }`}
             rows={8}
-            value={transcript} 
-            onChange={(e) => setTranscript(e.target.value)} />
-          <Button 
-          className="p-4 max-w-sm text-lg text-white rounded-lg bg-blue-500 hover:bg-blue-600 focus:outline-none shadow-md self-center"
-          onClick={handleSubmit}>Submit</Button>
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+          />
+          <Button
+            className="p-4 max-w-sm text-lg text-white rounded-lg bg-blue-500 hover:bg-blue-600 focus:outline-none shadow-md self-center"
+            onClick={handleSubmit}
+          >
+            Submit
+          </Button>
         </div>
       </div>
     </div>
