@@ -21,6 +21,7 @@
     "@remix-run/node": "^2.15.0",
     "@remix-run/react": "^2.15.0",
     "@remix-run/serve": "^2.15.0",
+    "aws-sdk": "^2.1692.0",
     "class-variance-authority": "^0.7.1",
     "formidable": "^3.5.2",
     "isbot": "^4.1.0",

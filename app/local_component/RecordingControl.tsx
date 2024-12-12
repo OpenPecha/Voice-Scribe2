@@ -161,14 +161,9 @@ function RecordingControlContent({ recordings }: { recordings: Recording[] }) {
 
   const handleSubmit = async () => {
     if (audioBlob && transcript) {
+      console.log('audioblob' , audioBlob)
       const formData = new FormData();
-      const file = new File(
-        [audioBlob],
-        `audio.${audioBlob.type.split("/")[1]}`,
-        {
-          type: audioBlob.type,
-        }
-      );
+      const file = new File([audioBlob], 'recording.webm', { type: audioBlob.type });
       formData.append("file", file);
       formData.append("transcript", transcript);
       formData.append("modifiedById", user.id);
@@ -176,13 +171,13 @@ function RecordingControlContent({ recordings }: { recordings: Recording[] }) {
       fetcher.submit(formData, {
         method: "POST",
         action: "/api/saveRecording",
+        encType:"multipart/form-data"
       });
     } else {
       alert("Please record audio and add a transcript.");
     }
   };
 
-  console.log("recoding UI");
 
   return (
     <div className="flex justify-center items-center h-screen">

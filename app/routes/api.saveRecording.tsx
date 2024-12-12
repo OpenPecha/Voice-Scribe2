@@ -1,7 +1,8 @@
-import { redirect, unstable_parseMultipartFormData } from "@remix-run/node";
-import type { ActionFunction } from "@remix-run/node";
+import { redirect, unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
+import type { ActionFunction, UploadHandler } from "@remix-run/node";
 import { prisma } from "~/db.server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { s3UploadHandler } from "./utils/s3uploadhandler";
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -33,18 +34,12 @@ async function uploadToS3(data: AsyncIterable<Uint8Array>, filename: string) {
 export const action: ActionFunction = async ({ request }) => {
   try {
     if (request.method === "POST") {
-      // const formData = await unstable_parseMultipartFormData(
-      //   request,
-      //   async ({ data, filename, contentType }) => {
-      //     if (contentType && contentType.includes("audio")) {
-      //       return await uploadToS3(data, filename || "recording.webm");
-      //     }
-      //     return undefined;
-      //   }
-      // );
-
-      const formData = await request.formData();
-      //const fileUrl = formData.get("file") as string;
+      const uploadHandler: UploadHandler = unstable_composeUploadHandlers(
+        s3UploadHandler,
+        unstable_createMemoryUploadHandler(),
+      );
+      const formData = await unstable_parseMultipartFormData(request, uploadHandler);
+      const fileUrl = formData.get("file") as string;
       const transcript = formData.get("transcript") as string;
       const modifiedById = formData.get("modifiedById") as string;
 
@@ -57,11 +52,10 @@ export const action: ActionFunction = async ({ request }) => {
           transcript,
           modified_by_id: modifiedById,
           status: "MODIFIED",
-         // fileUrl: fileUrl, // Save the S3 URL in your database
+         fileUrl: fileUrl, // Save the S3 URL in your database
         },
       });
-
-      return redirect(`/?session=${user?.email}`);
+       return newRecording;
     }
   } catch (error) {
     console.error("Error saving recording:", error);
