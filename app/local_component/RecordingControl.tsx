@@ -161,9 +161,8 @@ function RecordingControlContent({ recordings }: { recordings: Recording[] }) {
 
   const handleSubmit = async () => {
     if (audioBlob && transcript) {
-      console.log('audioblob' , audioBlob)
       const formData = new FormData();
-      const file = new File([audioBlob], 'recording.webm', { type: audioBlob.type });
+      const file = new File([audioBlob], Date.now()+'recording.mp3', { type: audioBlob.type });
       formData.append("file", file);
       formData.append("transcript", transcript);
       formData.append("modifiedById", user.id);
