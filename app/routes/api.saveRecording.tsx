@@ -1,41 +1,45 @@
-import { redirect, unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
+import {
+  unstable_composeUploadHandlers,
+  unstable_createMemoryUploadHandler,
+  unstable_parseMultipartFormData,
+} from "@remix-run/node";
 import type { ActionFunction, UploadHandler } from "@remix-run/node";
 import { prisma } from "~/db.server";
 import { s3UploadHandler } from "./utils/s3uploadhandler";
-
-
-
-
 
 export const action: ActionFunction = async ({ request }) => {
   try {
     if (request.method === "POST") {
       const uploadHandler: UploadHandler = unstable_composeUploadHandlers(
         s3UploadHandler,
-        unstable_createMemoryUploadHandler(),
+        unstable_createMemoryUploadHandler()
       );
-      const formData = await unstable_parseMultipartFormData(request, uploadHandler);
+      const formData = await unstable_parseMultipartFormData(
+        request,
+        uploadHandler
+      );
       const fileUrl = formData.get("file") as string;
-      console.log(fileUrl)
       const transcript = formData.get("transcript") as string;
       const modifiedById = formData.get("modifiedById") as string;
-
-      const user = await prisma.user.findUnique({
-        where: { id: modifiedById },
-      });
 
       const newRecording = await prisma.recording.create({
         data: {
           transcript,
           modified_by_id: modifiedById,
           status: "MODIFIED",
-         fileUrl: fileUrl, // Save the S3 URL in your database
+          fileUrl: fileUrl, // Save the S3 URL in your database
         },
       });
-      return redirect(`/?session=${user?.email}`);
+      return Response.json(
+        { success: true, recording: newRecording },
+        { status: 201 }
+      );
     }
   } catch (error) {
     console.error("Error saving recording:", error);
-    throw new Error("Failed to save recording");
+    return Response.json(
+      { error: "Failed to save recording" },
+      { status: 500 }
+    );
   }
 };

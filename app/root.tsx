@@ -6,6 +6,7 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
+import { Toaster } from "react-hot-toast";
 
 import "./tailwind.css";
 
@@ -33,6 +34,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster position="top-right" />
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -41,5 +43,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <Toaster position="top-right" />
+    </>
+  );
 }

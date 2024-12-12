@@ -3,7 +3,7 @@ import { Outlet, redirect, useLoaderData } from "@remix-run/react";
 import { useFetcher } from "@remix-run/react";
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { prisma } from "~/db.server";
-import { Status } from "@prisma/client"
+import { Status } from "@prisma/client";
 import Reviewer from "./review";
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -14,12 +14,12 @@ export const loader: LoaderFunction = async ({ request }) => {
     where: { email: session },
     select: { id: true, role: true, username: true, email: true },
   });
-  if(!user) return redirect("/error");
+  if (!user) return redirect("/error");
   const recording = await prisma.recording.findFirst({
     where: {
       status: "MODIFIED",
-      // fileUrl: { not: null},
-      transcript: { not: null},
+      fileUrl: { not: null },
+      transcript: { not: null },
     },
     select: {
       id: true,
@@ -28,7 +28,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       reviewed_transcript: true,
     },
   });
-  
+
   return { recording, user };
 };
 
@@ -57,13 +57,11 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return redirect(`/reviewer?session=${email}`);
-}
+};
 
 export default function ReviewerRoute() {
   const { recording, user } = useLoaderData();
   const fetcher = useFetcher();
-
-  console.log("recording", recording);
 
   return (
     <div>
@@ -71,12 +69,13 @@ export default function ReviewerRoute() {
       {recording === null ? (
         <p className="text-red-500">No recording available</p>
       ) : (
-        <Reviewer 
+        <Reviewer
           recording={{
             id: recording.id,
             fileUrl: recording.fileUrl,
             transcript: recording.transcript,
-            reviewed_transcript: recording.reviewed_transcript || recording.transcript
+            reviewed_transcript:
+              recording.reviewed_transcript || recording.transcript,
           }}
           onAccept={(id, reviewedTranscript) => {
             fetcher.submit(
@@ -85,9 +84,9 @@ export default function ReviewerRoute() {
                 reviewed_transcript: reviewedTranscript,
                 reviewed_by: user.id,
                 email: user.email,
-                action: 'accept'
+                action: "accept",
               },
-              { method: 'POST' }
+              { method: "POST" }
             );
           }}
           onReject={(id, reviewedTranscript) => {
@@ -97,9 +96,9 @@ export default function ReviewerRoute() {
                 reviewed_transcript: reviewedTranscript,
                 reviewed_by: user.id,
                 email: user.email,
-                action: 'reject'
+                action: "reject",
               },
-              { method: 'POST' }
+              { method: "POST" }
             );
           }}
         />

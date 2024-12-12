@@ -1,7 +1,7 @@
 import { redirect, type LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import RecordingControl from "~/local_component/RecordingControl";
 import { createUserIfNotExists } from "~/lib/user.server";
+import RecordingControlContent from "~/local_component/RecordingControl";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -22,13 +22,12 @@ export const loader: LoaderFunction = async ({ request }) => {
   if (user.role === "ADMIN") {
     return redirect(`/admin?session=${user.email}`);
   }
-  let recordings = [];
 
-  return { user, recordings };
+  return { user };
 };
 
 export default function Index() {
-  const { user, error, recordings } = useLoaderData();
+  const { user, error } = useLoaderData();
 
   if (error) {
     return <div>{error}</div>;
@@ -40,18 +39,22 @@ export default function Index() {
 
   return (
     <div className="p-3">
-      {user ? (
+      {user.role === "USER" && (
+        <h1 className="text-2xl font-bold text-green-500">
+          Welcome, {user.username}!, you are yet to assign a role. Please
+          contact the admin
+        </h1>
+      )}
+      {user.role === "ANNOTATOR" && (
         <>
-          <h1 className="text-2xl font-bold text-green-500">Welcome, {user.username}!</h1>
+          <h1 className="text-2xl font-bold text-green-500">
+            Welcome, {user.username}!
+          </h1>
 
-          {user.role === "ANNOTATOR" && (
-            <div>
-              <RecordingControl recordings={recordings} />
-            </div>
-          )}
+          <div>
+            <RecordingControlContent />
+          </div>
         </>
-      ) : (
-        <p>Loading user data...</p>
       )}
     </div>
   );
