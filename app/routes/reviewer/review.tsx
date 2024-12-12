@@ -79,6 +79,9 @@ export default function Reviewer({ recording, onAccept, onReject }: ReviewerProp
       };
     }
   }, [recording.fileUrl, state.repeatMode]);
+  useEffect(()=> {
+    dispatch({ type: "SET_REVIEWED_TRANSCRIPT", payload: recording.transcript || "" });
+  }, [recording]);
 
   const togglePlayPause = () => {
     if (waveSurferRef.current) {

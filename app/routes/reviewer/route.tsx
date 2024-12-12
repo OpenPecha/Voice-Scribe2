@@ -9,7 +9,11 @@ export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const session = url.searchParams.get("session");
   if (!session) return redirect("/error");
-  
+  const user = await prisma.user.findUnique({
+    where: { email: session },
+    select: { id: true, role: true, username: true, email: true },
+  });
+  if(!user) return redirect("/error");
   const recording = await prisma.recording.findFirst({
     where: {
       status: "MODIFIED",
@@ -24,17 +28,19 @@ export const loader: LoaderFunction = async ({ request }) => {
     },
   });
   
-  return { recording };
+  return { recording, user };
 };
 
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const recordingId = formData.get("recordingId") as string;
   const reviewed_transcript = formData.get("reviewed_transcript") as string;
+  const reviewer_id = formData.get("reviewed_by") as string;
+  const email = formData.get("email") as string;
   const action = formData.get("action") as string;
 
-  if (!recordingId) {
-    throw new Error("Missing recording ID");
+  if (!recordingId || !email) {
+    throw new Error("Missing recording ID or email");
   }
 
   if (action === "accept" || action === "reject") {
@@ -42,31 +48,32 @@ export const action: ActionFunction = async ({ request }) => {
       where: { id: recordingId },
       data: {
         reviewed_transcript: reviewed_transcript,
+        reviewed_by_id: reviewer_id,
         status: action === "accept" ? "REVIEWED" : "MODIFIED",
         updatedAt: new Date(),
       },
     });
   }
 
-  return redirect("/reviewer");
+  return redirect(`/reviewer?session=${email}`);
 }
 
 export default function ReviewerRoute() {
-  const { recording } = useLoaderData();
+  const { recording, user } = useLoaderData();
   const fetcher = useFetcher();
 
   console.log("recording", recording);
 
   return (
     <div>
-      <h1>Reviewer</h1>
+      <h1 className="text-2xl font-bold text-black text-center">Reviewer</h1>
       {recording === null ? (
-        <p>No recording available</p>
+        <p className="text-red-500">No recording available</p>
       ) : (
         <Reviewer 
           recording={{
             id: recording.id,
-            fileUrl: recording.fileUrl || "https://monlam-ai-web-testing.s3.ap-south-1.amazonaws.com/TTS/output/1726640623_6e64939f-5cc7-47cc-b9d7-3f2331e44eba-tts-audio.wav",
+            fileUrl: recording.fileUrl,
             transcript: recording.transcript,
             reviewed_transcript: recording.reviewed_transcript || recording.transcript
           }}
@@ -75,6 +82,8 @@ export default function ReviewerRoute() {
               {
                 recordingId: id,
                 reviewed_transcript: reviewedTranscript,
+                reviewed_by: user.id,
+                email: user.email,
                 action: 'accept'
               },
               { method: 'POST' }
@@ -85,6 +94,8 @@ export default function ReviewerRoute() {
               {
                 recordingId: id,
                 reviewed_transcript: reviewedTranscript,
+                reviewed_by: user.id,
+                email: user.email,
                 action: 'reject'
               },
               { method: 'POST' }

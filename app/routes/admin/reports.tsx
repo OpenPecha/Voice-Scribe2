@@ -16,7 +16,7 @@ interface ReportsProps {
 const Reports: React.FC<ReportsProps> = ({ recordings }) => {
   return (
     <div className="reports-container p-5">
-      <h1 className="text-2xl font-bold mb-4">Reports</h1>
+      <h1 className="text-2xl font-bold text-center mb-4">Reports</h1>
       <table className="table-auto w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-200">

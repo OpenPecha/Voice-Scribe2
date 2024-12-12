@@ -32,7 +32,7 @@ export const action: ActionFunction = async ({ request }) => {
          fileUrl: fileUrl, // Save the S3 URL in your database
         },
       });
-       return newRecording;
+      return redirect(`/?session=${user?.email}`);
     }
   } catch (error) {
     console.error("Error saving recording:", error);

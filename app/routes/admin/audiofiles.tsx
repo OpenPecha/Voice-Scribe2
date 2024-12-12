@@ -14,7 +14,7 @@ interface AudioFilesPageProps {
 const AudioFilesPage: React.FC<AudioFilesPageProps> = ({ recordings }) => {
   return (
     <div className="p-4">
-      <h2>All Audio Files</h2>
+      <h2 className="text-2xl font-bold mb-4 text-center">All Audio Files</h2>
       {recordings.length === 0 ? (
         <p>No recordings available.</p>
       ) : (

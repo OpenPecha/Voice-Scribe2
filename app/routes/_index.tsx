@@ -42,11 +42,10 @@ export default function Index() {
     <div className="p-3">
       {user ? (
         <>
-          <h1>Welcome, {user.username}!</h1>
+          <h1 className="text-2xl font-bold text-green-500">Welcome, {user.username}!</h1>
 
           {user.role === "ANNOTATOR" && (
             <div>
-              <h2>Your Recordings</h2>
               <RecordingControl recordings={recordings} />
             </div>
           )}
