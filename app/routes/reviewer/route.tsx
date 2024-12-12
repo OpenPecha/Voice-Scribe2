@@ -3,6 +3,7 @@ import { Outlet, redirect, useLoaderData } from "@remix-run/react";
 import { useFetcher } from "@remix-run/react";
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { prisma } from "~/db.server";
+import { Status } from "@prisma/client"
 import Reviewer from "./review";
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -49,7 +50,7 @@ export const action: ActionFunction = async ({ request }) => {
       data: {
         reviewed_transcript: reviewed_transcript,
         reviewed_by_id: reviewer_id,
-        status: action === "accept" ? "REVIEWED" : "MODIFIED",
+        status: action === "accept" ? Status.REVIEWED : Status.TRASH,
         updatedAt: new Date(),
       },
     });

@@ -49,4 +49,5 @@ enum Status {
   PENDING
   MODIFIED
   REVIEWED
+  TRASH
 }
