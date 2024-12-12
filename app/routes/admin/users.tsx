@@ -1,32 +1,8 @@
-import { prisma } from "~/db.server";
-import { json, ActionFunction, redirect } from "@remix-run/node";
 import { useFetcher } from "@remix-run/react";
-import { Role } from "@prisma/client"; 
-
-// Action function to handle role change for users
-export let action: ActionFunction = async ({ request }) => {
-  const formData = new URLSearchParams(await request.text());
-  const userId = formData.get("userId");
-  const newRole = formData.get("role");
-
-  console.log(`userId: ${userId}, newRole: ${newRole}`);
-
-  if (
-    userId &&
-    newRole &&
-    Object.values(Role).includes(newRole as Role)
-  ) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { role: newRole as Role },
-    });
-  }
-
-  return redirect("/route/admin/users");
-};
+import { Role } from "@prisma/client";
 
 interface User {
-  id: string; 
+  id: string;
   username: string;
   email: string;
   role: string;
@@ -39,40 +15,73 @@ interface UsersPageProps {
 export default function UsersPage({ users }: UsersPageProps) {
   const fetcher = useFetcher();
 
+  const isUpdating = fetcher.state !== "idle";
+  const actionData = fetcher.data;
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-center">Users</h1>
-      <table className="table-auto w-full">
-        <thead>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-center mb-6">Users Management</h1>
+
+      {/* Status Messages */}
+      {actionData?.error && (
+        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
+          {actionData.error}
+        </div>
+      )}
+      {actionData?.success && (
+        <div className="mb-4 p-4 bg-green-100 text-green-700 rounded">
+          {actionData.message}
+        </div>
+      )}
+
+      <table className="min-w-full bg-white shadow-sm rounded-lg overflow-hidden">
+        <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-2">Username</th>
-            <th className="px-4 py-2">Email</th>
-            <th className="px-4 py-2">Role</th>
-            <th className="px-4 py-2">Actions</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Username
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Email
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Role
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-gray-200">
           {users.map((user) => (
-            <tr key={user.id}>
-              <td className="px-4 py-2">{user.username}</td>
-              <td className="px-4 py-2">{user.email}</td>
-              <td className="px-4 py-2">{user.role}</td>
-              <td className="px-4 py-2">
-                <fetcher.Form method="post" action="/routes/admin/users">
+            <tr key={user.id} className="hover:bg-gray-50">
+              <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{user.role}</td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <fetcher.Form method="post">
                   <input type="hidden" name="userId" value={user.id} />
-                  <select
-                    name="role"
-                    defaultValue={user.role}
-                    className="bg-white border border-gray-300 rounded p-1"
-                  >
-                    <option value={Role.USER}>User</option>
-                    <option value={Role.ADMIN}>Admin</option>
-                    <option value={Role.ANNOTATOR}>Annotator</option>
-                    <option value={Role.REVIEWER}>Reviewer</option>
-                  </select>
-                  <button type="submit" className="ml-2 bg-blue-500 text-white p-1 rounded">
-                    Change Role
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <select
+                      name="role"
+                      defaultValue={user.role}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      disabled={isUpdating}
+                    >
+                      <option value="">Select a role</option>
+                      {Object.values(Role).map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="submit"
+                      disabled={isUpdating}
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                    >
+                      {isUpdating ? "Updating..." : "Update"}
+                    </button>
+                  </div>
                 </fetcher.Form>
               </td>
             </tr>

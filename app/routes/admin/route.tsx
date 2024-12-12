@@ -27,7 +27,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 
   if (!user || user.role !== "ADMIN") {
-    return redirect("/");
+    return redirect("/?session=" + session);
   }
 
   const users = await prisma.user.findMany();
@@ -36,6 +36,43 @@ export const loader: LoaderFunction = async ({ request }) => {
   });
 
   return { user, users, recordings };
+};
+
+export const action: ActionFunction = async ({ request }) => {
+  try {
+    const formData = Object.fromEntries(await request.formData());
+
+    const { userId, role } = formData;
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId.toString() },
+    });
+
+    if (!existingUser) {
+      return json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Update user role
+    const updatedUser = await prisma.user.update({
+      where: { id: userId.toString() },
+      data: { role: role as Role },
+    });
+
+    return json({
+      success: true,
+      message: `Role updated successfully to ${role}`,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Role update error:", error);
+    return json(
+      {
+        error: "Failed to update user role",
+      },
+      { status: 500 }
+    );
+  }
 };
 
 function AdminRoute() {

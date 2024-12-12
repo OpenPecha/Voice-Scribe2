@@ -15,6 +15,8 @@ export const loader: LoaderFunction = async ({ request }) => {
     select: { id: true, role: true, username: true, email: true },
   });
   if (!user) return redirect("/error");
+  if (user.role !== "REVIEWER") return redirect("/?session=" + session);
+
   const recording = await prisma.recording.findFirst({
     where: {
       status: "MODIFIED",
