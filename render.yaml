@@ -20,5 +20,6 @@ services:
 databases:
   - name: voice-scribe-pg
     type: postgres
-    plan: standard
+    plan: free
     instanceType: basic
+    storage: 10
