@@ -127,13 +127,10 @@ export default function RecordingControlContent() {
   const handleSubmit = async () => {
     if (audioURL && transcript) {
       const formData = new FormData();
-      const file = new File(
-        [new Blob([audioURL])],
-        Date.now() + "recording.mp3",
-        {
-          type: "audio/mpeg",
-        }
-      );
+      const audioBlob = await fetch(audioURL).then((res) => res.blob());
+      const file = new File([audioBlob], Date.now() + "recording.mp3", {
+        type: audioBlob.type,
+      });
       formData.append("file", file);
       formData.append("transcript", transcript);
       formData.append("modifiedById", user.id);
