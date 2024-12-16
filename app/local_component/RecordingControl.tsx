@@ -90,8 +90,14 @@ export default function RecordingControlContent() {
       recorder.start();
       setIsRecording(true);
     } catch (error) {
-      console.error("Error accessing audio devices:", error);
-      alert("Unable to access audio devices.");
+      console.error("Microphone access error:", error);
+      if (error.name === 'NotAllowedError') {
+        alert("Microphone access was denied. Please check your browser settings.");
+      } else if (error.name === 'NotFoundError') {
+        alert("No microphone found. Please connect a microphone and try again.");
+      } else {
+        alert("Unable to access microphone. Please check permissions.");
+      }
     }
   };
 
