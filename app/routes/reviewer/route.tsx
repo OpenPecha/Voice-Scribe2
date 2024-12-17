@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { Outlet, redirect, useLoaderData } from "@remix-run/react";
 import { useFetcher } from "@remix-run/react";
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { prisma } from "~/db.server";
 import { Status } from "@prisma/client";
 import Reviewer from "./review";
+import Sidebar from "~/local_component/Sidebar";
+import { FaBars } from "react-icons/fa";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -64,8 +66,17 @@ export const action: ActionFunction = async ({ request }) => {
 export default function ReviewerRoute() {
   const { recording, user } = useLoaderData();
   const fetcher = useFetcher();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
+    <div className="relative">
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <button
+      onClick={() => setSidebarOpen(!sidebarOpen)}
+      className="absolute top-4 left-4 bg-blue-500 text-white p-3 rounded-full z-10"
+      >
+  <FaBars />
+  </button>
     <div>
       <h1 className="text-2xl font-bold text-black text-center">Reviewer</h1>
       {recording === null ? (
@@ -105,6 +116,7 @@ export default function ReviewerRoute() {
           }}
         />
       )}
+    </div>
     </div>
   );
 }
