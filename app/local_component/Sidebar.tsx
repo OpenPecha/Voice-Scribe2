@@ -1,6 +1,5 @@
 import {useFetcher, useLoaderData } from "@remix-run/react";
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -16,42 +15,50 @@ interface LoaderData {
   user: {
     id: string;
     email: string;
-    fileUrls: {
+    submissions: {
       id: string;
-      fileUrl: string;
+      transcript: string;
       createdAt: string
     }[];
 };
 }
 
+const truncateText = (text: string, charLimit: number = 50): string => {
+    if (text.length > charLimit) {
+        return text.slice(0, charLimit) + "...";
+    }
+    return text;
+};
 export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
     const { user } = useLoaderData<LoaderData>();
     const fetcher = useFetcher();
-    const [fileUrls, setFileUrls] = useState<LoaderData["user"]["fileUrls"]>([]);
+    const [submissions, setSubmissions] = useState<LoaderData["user"]["submissions"]>([]);
     const [loading, setLoading] = useState(true);
+    const hasLoadedOnce = useRef(false);
 
     useEffect(() => {
-        if (sidebarOpen && fileUrls.length === 0) {
+        if (sidebarOpen && submissions.length === 0) {
           setLoading(true); 
           fetcher.submit(
             { session: user.email },
             { method: "get", action: "/api/history" }
         );
+        hasLoadedOnce.current = true;
         }
-      }, [sidebarOpen, user.email, fetcher, fileUrls.length]);
+      }, [sidebarOpen, user.email, fetcher, submissions.length]);
     
       useEffect(() => {
         if (fetcher.state === "idle" && fetcher.data) {
             console.log("Fetcher data: ", fetcher.data);
-            const { fileUrls } = fetcher.data.user;
-            setFileUrls(fileUrls || []);
+            const { submissions } = fetcher.data.user;
+            setSubmissions(submissions || []);
             setLoading(false);
         }
       }, [fetcher.state, fetcher.data]);
 
       return (
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="left" className="w-72" aria-describedby="history-description">
+          <SheetContent side="left" className="w-72 bg-white text-black" aria-describedby="history-description">
             <SheetHeader>
               <SheetTitle className="text-lg font-semibold text-blue-800">
                 History
@@ -60,17 +67,18 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
             <div id="history-description">
             <ul className="mt-4 space-y-2">
             {loading ? (
-              <li className="text-sm text-blue-800">Loading...</li>
-            ) : fileUrls.length > 0 ? (
-              fileUrls.map((file) => (
-                <li key={file.id} className="text-sm text-blue-800 hover:underline">
-                  <Link to={file.fileUrl}>
-                    {`Recording - ${new Date(file.createdAt).toLocaleString()}`}
-                  </Link>
+              <li className="text-sm text-black">Loading...</li>
+            ) : submissions.length > 0 ? (
+              submissions.map((submission) => (
+                <li key={submission.id} className="text-sm ">
+                  <span className="block font-medium truncate">{truncateText(submission.transcript)}</span>
+                  <span className="block text-xs text-gray-500">
+                    {new Date(submission.createdAt).toLocaleString()}
+                  </span>
                 </li>
-                ))
+              ))
             ) : (
-              <li className="text-sm text-blue-800">No submissions available</li>
+              <li className="text-sm text-black">No submissions available</li>
             )}
           </ul>
           </div>

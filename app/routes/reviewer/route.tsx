@@ -80,7 +80,7 @@ export default function ReviewerRoute() {
     <div>
       <h1 className="text-2xl font-bold text-black text-center">Reviewer</h1>
       {recording === null ? (
-        <p className="text-red-500">No recording available</p>
+        <p className="text-red-500 mt-6">No recording available</p>
       ) : (
         <Reviewer
           recording={{

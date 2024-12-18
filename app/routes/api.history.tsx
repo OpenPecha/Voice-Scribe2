@@ -22,8 +22,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
-      fileUrl: true,
       createdAt: true,
+      transcript: true,
+      reviewed_transcript: true,
     },
   });
 
@@ -37,9 +38,13 @@ export const loader: LoaderFunction = async ({ request }) => {
   const result = {
     user: {
       id: userEmail,
-      fileUrls: recordings.map((recording) => ({
+      submissions: recordings.map((recording) => ({
         id: recording.id,
-        fileUrl: recording.fileUrl,
+        transcript: recording.reviewed_transcript
+          ? recording.reviewed_transcript.slice(0, 50)
+          : recording.transcript
+          ? recording.transcript.slice(0, 50)
+          : "No transcript available",
         createdAt: recording.createdAt.toISOString(),
     })),  
     },
