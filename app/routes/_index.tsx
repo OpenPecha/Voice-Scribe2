@@ -1,7 +1,10 @@
 import { redirect, type LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { useState } from "react";
+import { FaBars } from "react-icons/fa";
 import { createUserIfNotExists } from "~/lib/user.server";
 import RecordingControlContent from "~/local_component/RecordingControl";
+import Sidebar from "~/local_component/Sidebar";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -29,6 +32,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 export default function Index() {
   const { user, error } = useLoaderData();
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
   if (error) {
     return <div>{error}</div>;
   }
@@ -39,6 +44,14 @@ export default function Index() {
 
   return (
     <div className="p-3">
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="absolute top-4 left-4 bg-blue-500 text-white p-3 rounded-full"
+      >
+        <FaBars />
+      </button>
+      <div className="mt-16">
       {user.role === "USER" && (
         <h1 className="text-2xl font-bold text-green-500">
           Welcome, {user.username}!, you are yet to assign a role. Please
@@ -56,6 +69,7 @@ export default function Index() {
           </div>
         </>
       )}
+    </div>
     </div>
   );
 }
