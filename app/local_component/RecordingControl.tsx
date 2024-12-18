@@ -203,7 +203,7 @@ export default function RecordingControlContent() {
         </div>
         <div className="flex flex-col w-full sm:w-full items-center sm:items-start space-y-6">
           <Textarea
-          style={{ fontSize: "16px" }}
+          style={{ fontSize: "20px" }}
           className={`w-full max-w-5xl p-6 h-[400px] text-black rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
             isPlaying ? "caret-transparent" : ""
           }mt-8`}

@@ -132,7 +132,7 @@ export default function Reviewer({ recording, onAccept, onReject }: ReviewerProp
         }
         rows={5}
         className="max-w-3xl w-full h-[400px] mx-auto bg-white shadow-lg rounded-lg p-6 text-black"
-        style={{ fontSize: "16px" }}
+        style={{ fontSize: "20px" }}
       />
       
       {/* Accept/Reject Buttons */}
