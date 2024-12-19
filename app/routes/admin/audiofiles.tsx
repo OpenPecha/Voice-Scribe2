@@ -18,7 +18,8 @@ const AudioFilesPage: React.FC<AudioFilesPageProps> = ({ recordings }) => {
       {recordings.length === 0 ? (
         <p>No recordings available.</p>
       ) : (
-        <table className="table-auto w-full mt-4">
+        <div className="overflow-x-auto">
+        <table className="table-auto w-full mt-4 text-sm sm:text-base">
           <thead>
             <tr>
               <th className="px-4 py-2">File URL</th>
@@ -30,7 +31,7 @@ const AudioFilesPage: React.FC<AudioFilesPageProps> = ({ recordings }) => {
           </thead>
           <tbody>
             {recordings.map((recording) => (
-              <tr key={recording.id}>
+              <tr key={recording.id} className="border-b">
                 <td className="px-4 py-2">
                   <a href={recording.fileUrl} target="_blank" className="text-blue-500 hover:underline">
                     {recording.fileUrl}
@@ -48,6 +49,7 @@ const AudioFilesPage: React.FC<AudioFilesPageProps> = ({ recordings }) => {
             ))}
           </tbody>
         </table>
+      </div>
       )}
     </div>
   );

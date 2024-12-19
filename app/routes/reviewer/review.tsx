@@ -99,10 +99,10 @@ export default function Reviewer({ recording, onAccept, onReject }: ReviewerProp
   };
 
   return (
-    <div className="flex flex-col items-center p-4 space-y-4">
-      <div ref={waveformRef} className="w-full max-w-xl bg-gray-200 rounded" />
+    <div className="flex flex-col items-center p-6 space-y-6 w-full ">
+      <div ref={waveformRef} className="w-full max-w-2xl bg-gray-200 rounded mx-auto mb-4" />
       {/* Play/Pause Buttons */}
-      <div className="flex space-x-4">
+      <div className="flex space-x-4 justify-center w-full">
         <Button 
           onClick={togglePlayPause} 
           className="bg-blue-500" 
@@ -131,12 +131,11 @@ export default function Reviewer({ recording, onAccept, onReject }: ReviewerProp
           })
         }
         rows={5}
-        className="max-w-3xl w-full h-[400px] mx-auto bg-white shadow-lg rounded-lg p-6 text-black"
-        style={{ fontSize: "16px" }}
+        className="w-full max-w-3xl min-h-[300px] sm:min-h-[350px] md:min-h-[400px] bg-white shadow-lg rounded-lg p-6 text-black !text-lg mx-auto"
       />
       
       {/* Accept/Reject Buttons */}
-      <div className="flex space-x-4">
+      <div className="flex space-x-4 justify-center">
         <Button 
           onClick={() => onReject(recording.id)} 
           className="bg-red-500"

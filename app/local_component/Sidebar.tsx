@@ -1,5 +1,6 @@
 import {useFetcher, useLoaderData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
+import { FaPlay } from "react-icons/fa";
 import {
   Sheet,
   SheetContent,
@@ -15,10 +16,12 @@ interface LoaderData {
   user: {
     id: string;
     email: string;
+    role: string;
     submissions: {
       id: string;
       transcript: string;
       createdAt: string
+    fileUrl: string;
     }[];
 };
 }
@@ -35,17 +38,20 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
     const [submissions, setSubmissions] = useState<LoaderData["user"]["submissions"]>([]);
     const [loading, setLoading] = useState(true);
     const hasLoadedOnce = useRef(false);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
         if (sidebarOpen && submissions.length === 0) {
           setLoading(true); 
           fetcher.submit(
-            { session: user.email },
+            { session: user.email,
+                role: user.role
+             },
             { method: "get", action: "/api/history" }
         );
         hasLoadedOnce.current = true;
         }
-      }, [sidebarOpen, user.email, fetcher, submissions.length]);
+      }, [sidebarOpen, user.email, user.role, fetcher, submissions.length]);
     
       useEffect(() => {
         if (fetcher.state === "idle" && fetcher.data) {
@@ -56,6 +62,16 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         }
       }, [fetcher.state, fetcher.data]);
 
+      const handlePlay = (fileUrl: string) => {
+        console.log("File URL: ", fileUrl);
+        if (audioRef.current) {
+          audioRef.current.src = fileUrl;
+          audioRef.current.play().catch((error) => {
+            console.error("Error playing audio:", error);
+          });
+        }
+    };
+
       return (
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetContent side="left" className="w-72 bg-white text-black" aria-describedby="history-description">
@@ -64,17 +80,21 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                 History
               </SheetTitle>
             </SheetHeader>
+            <audio ref={audioRef} controls style={{ display: "none" }}/>
             <div id="history-description">
             <ul className="mt-4 space-y-2">
             {loading ? (
               <li className="text-sm text-black">Loading...</li>
             ) : submissions.length > 0 ? (
               submissions.map((submission) => (
-                <li key={submission.id} className="text-sm ">
+                <li key={submission.id} className="flex items-center text-sm border-b py-2">
+                    <div className="flex  flex-col w-4/5">
                   <span className="block font-medium truncate">{truncateText(submission.transcript)}</span>
                   <span className="block text-xs text-gray-500">
                     {new Date(submission.createdAt).toLocaleString()}
                   </span>
+                  </div>
+                  <button onClick={() => handlePlay(submission.fileUrl)} className="p-2 bg-blue-500 text-white rounded-full text-sm "><FaPlay /></button>
                 </li>
               ))
             ) : (

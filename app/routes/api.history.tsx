@@ -4,29 +4,49 @@ import { prisma } from "~/db.server";
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const userEmail = url.searchParams.get("session");
+  const userRole = url.searchParams.get("role");
 
-  if (!userEmail) {
+  if (!userEmail || !userRole) {
     return new Response(
-      JSON.stringify({ error: "User session is required" }),
+      JSON.stringify({ error: "User session and role are required" }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
 
-  const recordings = await prisma.recording.findMany({
-    where: {
-      OR: [
-        { modified_by: { email: userEmail } },
-        { reviewed_by: { email: userEmail } },
-      ],
-    },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      createdAt: true,
-      transcript: true,
-      reviewed_transcript: true,
-    },
-  });
+  let recordings;
+
+  if (userRole === "REVIEWER") {
+    recordings = await prisma.recording.findMany({
+      where: {
+        reviewed_by: null, 
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        createdAt: true,
+        transcript: true,
+        reviewed_transcript: true,
+        fileUrl: true,
+      },
+    });
+  }
+
+  else if (userRole === "ANNOTATOR") {
+    recordings = await prisma.recording.findMany({
+      where: {
+        modified_by: { email: userEmail },
+        reviewed_by: null,
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        createdAt: true,
+        transcript: true,
+        reviewed_transcript: true,
+        fileUrl: true,
+      },
+    });
+  }
 
   if (!recordings || recordings.length === 0) {
     return new Response(
@@ -46,6 +66,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           ? recording.transcript.slice(0, 50)
           : "No transcript available",
         createdAt: recording.createdAt.toISOString(),
+        fileUrl: recording.fileUrl,
     })),  
     },
   };

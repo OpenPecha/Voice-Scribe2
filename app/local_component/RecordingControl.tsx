@@ -155,7 +155,7 @@ export default function RecordingControlContent() {
   return (
     <div className="flex justify-center items-center h-screen">
       <div className="flex flex-col justify-center items-center w-full max-w-5xl space-y-8">
-        <div className="flex justify-center items-center w-full sm:w-1/2">
+        <div className="flex justify-center items-center w-full px-4 sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-2/5">
           <div className="flex flex-col items-center w-full space-y-6 mt-4">
             {!audioURL ? (
               <button
@@ -207,10 +207,9 @@ export default function RecordingControlContent() {
             )}
           </div>
         </div>
-        <div className="flex flex-col w-full sm:w-full items-center sm:items-start space-y-6">
+        <div className="flex flex-col w-full px-4 items-center sm:items-start space-y-6">
           <Textarea
-          style={{ fontSize: "16px" }}
-          className={`w-full max-w-5xl p-6 h-[400px] text-black rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          className={`w-full max-w-5xl p-6 h-[400px] !text-lg text-black rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
             isPlaying ? "caret-transparent" : ""
           }mt-8`}
             rows={8}

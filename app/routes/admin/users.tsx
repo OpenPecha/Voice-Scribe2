@@ -34,6 +34,7 @@ export default function UsersPage({ users }: UsersPageProps) {
         </div>
       )}
 
+      <div className="overflow-x-auto">
       <table className="min-w-full bg-white shadow-sm rounded-lg overflow-hidden">
         <thead className="bg-gray-50">
           <tr>
@@ -88,6 +89,7 @@ export default function UsersPage({ users }: UsersPageProps) {
           ))}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }
