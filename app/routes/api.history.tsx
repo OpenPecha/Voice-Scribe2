@@ -18,7 +18,8 @@ export const loader: LoaderFunction = async ({ request }) => {
   if (userRole === "REVIEWER") {
     recordings = await prisma.recording.findMany({
       where: {
-        reviewed_by: null, 
+        reviewed_by: { email: userEmail },
+        status: "REVIEWED",
       },
       orderBy: { createdAt: "desc" },
       select: {
@@ -29,13 +30,11 @@ export const loader: LoaderFunction = async ({ request }) => {
         fileUrl: true,
       },
     });
-  }
-
-  else if (userRole === "ANNOTATOR") {
+  } else if (userRole === "ANNOTATOR") {
     recordings = await prisma.recording.findMany({
       where: {
         modified_by: { email: userEmail },
-        reviewed_by: null,
+        status: "MODIFIED",
       },
       orderBy: { createdAt: "desc" },
       select: {
@@ -49,10 +48,10 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 
   if (!recordings || recordings.length === 0) {
-    return new Response(
-      JSON.stringify({ error: "No submissions available" }),
-      { status: 404, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "No submissions available" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   const result = {
@@ -62,12 +61,10 @@ export const loader: LoaderFunction = async ({ request }) => {
         id: recording.id,
         transcript: recording.reviewed_transcript
           ? recording.reviewed_transcript.slice(0, 50)
-          : recording.transcript
-          ? recording.transcript.slice(0, 50)
-          : "No transcript available",
+          : recording?.transcript?.slice(0, 50),
         createdAt: recording.createdAt.toISOString(),
         fileUrl: recording.fileUrl,
-    })),  
+      })),
     },
   };
 
