@@ -67,7 +67,7 @@ Ensure you have an active AWS account with an S3 bucket set up for storing audio
   npm run dev
   ```
 
-## Enviironment Variables
+## Environment Variables
 1. Here are the environment variables required for the web:
    - DATABASE_URL: The hostname or IP address of your PostgreSQL database server.connection string provided from the database eg. formatted:postgresql://[database-user]:[database-password]@[database-host]/[database-name]?schema=public
    - AWS_ACCESS_KEY_ID: Your AWS Access Key.
