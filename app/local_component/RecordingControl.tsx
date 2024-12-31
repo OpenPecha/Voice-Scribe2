@@ -59,7 +59,9 @@ export default function RecordingControlContent() {
         height: 100,
         barWidth: 2,
         cursorColor: "#1e40af",
-        backend: "MediaElement",
+        backend: "WebAudio",
+        minPxPerSec: 50,
+        interact: true,
       });
 
       waveSurferRef.current.load(audioURL);
@@ -77,29 +79,29 @@ export default function RecordingControlContent() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setAudioStream(stream);
-      const recorder = new MediaRecorder(stream);
+
+      let mimeType = 'audio/mp4';
+    if (!MediaRecorder.isTypeSupported('audio/mp4')) {
+      mimeType = 'audio/webm';
+    }
+
+      const recorder = new MediaRecorder(stream, { mimeType });
       setMediaRecorder(recorder);
 
       const chunks: BlobPart[] = [];
       recorder.ondataavailable = (e) => chunks.push(e.data);
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: "audio/webm" });
+        const blob = new Blob(chunks, { type: mimeType });
         setAudioURL(URL.createObjectURL(blob));
       };
 
       recorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error("Microphone access error:", error);
-      if (error.name === 'NotAllowedError') {
-        alert("Microphone access was denied. Please check your browser settings.");
-      } else if (error.name === 'NotFoundError') {
-        alert("No microphone found. Please connect a microphone and try again.");
-      } else {
-        alert("Unable to access microphone. Please check permissions.");
-      }
-    }
-  };
+    setIsRecording(true);
+  } catch (error) {
+    console.error("Microphone access error:", error);
+    alert("Unable to access microphone. Please check permissions.");
+  }
+};
 
   const stopRecordingHandler = () => {
     if (mediaRecorder) {
