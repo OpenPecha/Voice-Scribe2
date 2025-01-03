@@ -211,10 +211,9 @@ export default function RecordingControlContent() {
         </div>
         <div className="flex flex-col w-full px-4 items-center sm:items-start space-y-6">
           <Textarea
-          className={`w-full max-w-5xl p-6 h-[400px] !text-lg text-black rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          className={`w-full max-w-5xl p-6 h-32 sm:h-40 md:h-48 lg:h-56 !text-lg text-black rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
             isPlaying ? "caret-transparent" : ""
           }mt-8`}
-            rows={8}
             value={transcript}
             onChange={(e) => setTranscript(e.target.value)}
           />

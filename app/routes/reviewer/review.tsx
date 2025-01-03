@@ -130,8 +130,7 @@ export default function Reviewer({ recording, onAccept, onReject }: ReviewerProp
             payload: e.target.value 
           })
         }
-        rows={5}
-        className="w-full max-w-3xl min-h-[300px] sm:min-h-[350px] md:min-h-[400px] bg-white shadow-lg rounded-lg p-6 text-black !text-lg mx-auto"
+        className="w-full max-w-5xl h-32 sm:h-40 md:h-48 lg:h-56 bg-white shadow-lg rounded-lg p-6 text-black !text-lg mx-auto"
       />
       
       {/* Accept/Reject Buttons */}

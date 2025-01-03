@@ -78,7 +78,7 @@ export default function ReviewerRoute() {
   <FaBars />
   </button>
     <div>
-      <h1 className="text-2xl font-bold text-black text-center">Reviewer</h1>
+      <h1 className="text-2xl font-bold pt-6 text-black text-center">Reviewer</h1>
       {recording === null ? (
         <p className="text-red-500 mt-6">No recording available</p>
       ) : (
