@@ -1,5 +1,5 @@
 import { useFetcher } from "@remix-run/react";
-import { Role } from "@prisma/client";
+import { Roles } from "~/types";
 import { toast } from "react-hot-toast";
 import { useEffect } from "react";
 
@@ -65,7 +65,7 @@ export default function Users({ users }: UsersProps) {
                         disabled={isUpdating}
                       >
                         <option value="">Select a role</option>
-                        {Object.values(Role).map((role) => (
+                        {Object.values(Roles).map((role) => (
                           <option key={role} value={role}>
                             {role}
                           </option>
