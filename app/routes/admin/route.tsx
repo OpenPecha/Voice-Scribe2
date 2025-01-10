@@ -1,123 +1,85 @@
-import { LoaderFunction, json, redirect } from "@remix-run/node";
-import { useLoaderData, Link } from "@remix-run/react";
+import { LoaderFunction, redirect } from "@remix-run/node";
+import { Link, Outlet, useLoaderData, useLocation } from "@remix-run/react";
 import { prisma } from "~/db.server";
-import { Role } from "@prisma/client";
 import {
-  Menubar,
-  MenubarContent,
-  MenubarItem,
-  MenubarMenu,
-  MenubarTrigger,
-  MenubarSeparator,
-} from "~/components/ui/menubar";
-import UsersPage from "~/routes/admin/users";
-import AudioFilesPage from "~/routes/admin/audiofiles";
-import Reports from "~/routes/admin/reports";
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  navigationMenuTriggerStyle,
+} from "~/components/ui/navigation-menu";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const session = url.searchParams.get("session");
-  console.log(session);
 
   if (!session) return redirect("/error");
 
   const user = await prisma.user.findUnique({
     where: { email: session },
-    select: { id: true, role: true, username: true },
+    select: { id: true, role: true, username: true, email: true },
   });
 
   if (!user || user.role !== "ADMIN") {
     return redirect("/?session=" + session);
   }
 
-  const users = await prisma.user.findMany();
-  const recordings = await prisma.recording.findMany({
-    include: { modified_by: true, reviewed_by: true },
-  });
-
-  return { user, users, recordings };
+  return { user };
 };
 
-export const action: ActionFunction = async ({ request }) => {
-  try {
-    const formData = Object.fromEntries(await request.formData());
-
-    const { userId, role } = formData;
-
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId.toString() },
-    });
-
-    if (!existingUser) {
-      return json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Update user role
-    const updatedUser = await prisma.user.update({
-      where: { id: userId.toString() },
-      data: { role: role as Role },
-    });
-
-    return json({
-      success: true,
-      message: `Role updated successfully to ${role}`,
-      user: updatedUser,
-    });
-  } catch (error) {
-    console.error("Role update error:", error);
-    return json(
-      {
-        error: "Failed to update user role",
-      },
-      { status: 500 }
-    );
-  }
-};
-
-function AdminRoute() {
-  const { user, users, recordings } = useLoaderData();
+export default function AdminRoute() {
+  const { user } = useLoaderData<{ user: { email: string; username: string; role: string } }>();
+  const location = useLocation();
 
   return (
-    <div className="bg-gray-300 text-black h-screen pt-3 overflow-scroll">
-      <div className="flex justify-center m-3">
-        <Menubar>
-          <MenubarMenu>
-            <MenubarTrigger>Admin</MenubarTrigger>
-            <MenubarContent>
-              <MenubarItem>
-                Welcome, {user.username} - {user.role}
-              </MenubarItem>
-              <MenubarSeparator />
-              <MenubarItem>Dashboard</MenubarItem>
-              <MenubarItem>
+    <div className="min-h-screen w-full">
+      <div className="flex flex-col items-center">
+        <div className="mt-4 px-8 py-2 rounded-md bg-blue-100 shadow-md inline-block"> 
+          <h1 className="text-lg font-semibold">Admin</h1>
+        </div>
+
+        {/* Navigation */}
+        <div className="w-full flex justify-center mt-4">
+          <NavigationMenu>
+            <NavigationMenuList className="flex space-x-4 bg-white rounded-lg p-2 shadow-md">
+              <NavigationMenuItem>
                 <Link
-                  to="/admin/users"
-                  className="hover:underline text-blue-500"
+                  to={`/admin/users?session=${user.email}`}
+                  className={`${navigationMenuTriggerStyle()} ${
+                    location.pathname === "/admin/users" ? "bg-accent" : ""
+                  }`}
                 >
-                  Go to Users
+                  Users
                 </Link>
-              </MenubarItem>
-              <MenubarItem>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
                 <Link
-                  to="/admin/audiofiles"
-                  className="hover:underline text-blue-500"
+                  to={`/admin/audiofiles?session=${user.email}`}
+                  className={`${navigationMenuTriggerStyle()} ${
+                    location.pathname === "/admin/audiofiles" ? "bg-accent" : ""
+                  }`}
                 >
                   Audio Files
                 </Link>
-              </MenubarItem>
-              <MenubarItem>Settings</MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
-        </Menubar>
-      </div>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <Link
+                  to={`/admin/reports?session=${user.email}`}
+                  className={`${navigationMenuTriggerStyle()} ${
+                    location.pathname === "/admin/reports" ? "bg-accent" : ""
+                  }`}
+                >
+                  Reports
+                </Link>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+        </div>
 
-      <hr />
-      <UsersPage users={users} />
-      <AudioFilesPage recordings={recordings} />
-      <Reports recordings={recordings} />
+        {/* Content Area */}
+        <div className="w-full max-w-7xl mx-auto px-4 mt-6">
+          <Outlet />
+        </div>
+      </div>
     </div>
   );
 }
-
-export default AdminRoute;
