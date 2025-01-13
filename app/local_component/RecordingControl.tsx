@@ -37,7 +37,7 @@ export default function RecordingControlContent() {
       container: waveformRef.current,
       waveColor: "blue",
       progressColor: "blue",
-      height: 100,
+      height: 80,
       barWidth: 2,
       cursorColor: "#1e40af",
       backend: "WebAudio",
@@ -53,7 +53,7 @@ export default function RecordingControlContent() {
         setIsPlaying(false);
       }
     });
-  }, [isLooping]);
+  }, []);
 
   const stopRecordingHandler = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
@@ -147,7 +147,20 @@ export default function RecordingControlContent() {
   };
 
   const toggleLoop = () => {
-    setIsLooping(!isLooping);
+    const newLoopState = !isLooping;
+    setIsLooping(newLoopState);
+    
+    if (waveSurferRef.current) {
+      waveSurferRef.current.un('finish');
+      waveSurferRef.current.on('finish', () => {
+        if (newLoopState) {
+          waveSurferRef.current?.play();
+        } else {
+          waveSurferRef.current?.stop();
+          setIsPlaying(false);
+        }
+      });
+    }
   };
 
   const handleSubmit = async () => {
@@ -176,7 +189,7 @@ export default function RecordingControlContent() {
   };
 
   return (
-    <div className="flex justify-center items-start h-screen pt-32">
+    <div className="flex justify-center items-start h-screen pt-24">
       <div className="flex flex-col justify-start items-center w-full max-w-5xl space-y-6">
         <div className="flex justify-center items-center w-full px-4 sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-2/5">
           <div className="flex flex-col items-center w-full space-y-6">
@@ -203,7 +216,7 @@ export default function RecordingControlContent() {
               <>
                 <div
                   ref={waveformRef}
-                  className="w-full max-w-xl h-40 rounded-lg bg-gray-300 shadow-md"
+                  className="w-full max-w-xl h-24 rounded-lg bg-gray-300 shadow-md"
                 />
                 <div className="flex justify-center space-x-6 mt-4">
                   <button
