@@ -56,8 +56,8 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       useEffect(() => {
         if (fetcher.state === "idle" && fetcher.data) {
             console.log("Fetcher data: ", fetcher.data);
-            const { submissions } = fetcher.data.user;
-            setSubmissions(submissions || []);
+            const fetchedSubmissions = fetcher.data?.user?.submissions || [];
+            setSubmissions(fetchedSubmissions);
             setLoading(false);
         }
       }, [fetcher.state, fetcher.data]);
