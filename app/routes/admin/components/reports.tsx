@@ -84,6 +84,7 @@ function DateTimePicker({
                 onSelect(date, initialHours, initialMinutes);
               }
             }}
+            disabled={(date) => date > new Date()}
             initialFocus
             className="rounded-md border"
           />
