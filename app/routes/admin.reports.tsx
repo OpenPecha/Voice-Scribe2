@@ -1,4 +1,4 @@
-import { LoaderFunction, json } from "@remix-run/node";
+import { LoaderFunction, ActionFunction, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { prisma } from "~/db.server";
 import Reports from "./admin/components/reports";
@@ -15,11 +15,29 @@ interface LoaderData {
   userStats: UserStats[];
 }
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const action: ActionFunction = async ({ request }) => {
   const url = new URL(request.url);
   const session = url.searchParams.get("session");
 
   if (!session) throw new Error("Session required");
+
+  const formData = await request.formData();
+  const from = formData.get("from");
+  const to = formData.get("to");
+  
+  console.log('Received form data:', { from, to });
+
+  if (!from || !to) {
+    return json<LoaderData>({ userStats: [] });
+  }
+
+  const startDate = new Date(from as string);
+  const endDate = new Date(to as string);
+
+  console.log('Query date range:', {
+    from: startDate.toISOString(),
+    to: endDate.toISOString()
+  });
 
   const usersWithStats = await prisma.user.findMany({
     where: {
@@ -32,15 +50,29 @@ export const loader: LoaderFunction = async ({ request }) => {
       username: true,
       role: true,
       modified: {
+        where: {
+          modifiedAt: {
+            gte: startDate,
+            lte: endDate
+          }
+        },
         select: {
           id: true,
-          status: true
+          status: true,
+          modifiedAt: true
         }
       },
       reviewed: {
+        where: {
+          updatedAt: {
+            gte: startDate,
+            lte: endDate
+          }
+        },
         select: {
           id: true,
-          status: true
+          status: true,
+          updatedAt: true
         }
       }
     }
@@ -63,7 +95,16 @@ export const loader: LoaderFunction = async ({ request }) => {
     };
   });
 
+  console.log('Final stats:', userStats);
   return json<LoaderData>({ userStats });
+};
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const url = new URL(request.url);
+  const session = url.searchParams.get("session");
+
+  if (!session) throw new Error("Session required");
+  return json<LoaderData>({ userStats: [] });
 };
 
 export default function ReportsRoute() {
