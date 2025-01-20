@@ -2,6 +2,7 @@ import { LoaderFunction, ActionFunction, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { prisma } from "~/db.server";
 import Reports from "./admin/components/reports";
+import { splitIntoSyllables } from "./utils/syllableCounter";
 
 interface UserStats {
   username: string;
@@ -9,6 +10,7 @@ interface UserStats {
   tasksSubmitted: number;
   tasksReviewed: number;
   tasksTrashed: number;
+  syllablesProcessed: number;
 }
 
 interface LoaderData {
@@ -59,7 +61,8 @@ export const action: ActionFunction = async ({ request }) => {
         select: {
           id: true,
           status: true,
-          modifiedAt: true
+          modifiedAt: true,
+          transcript: true
         }
       },
       reviewed: {
@@ -72,7 +75,8 @@ export const action: ActionFunction = async ({ request }) => {
         select: {
           id: true,
           status: true,
-          updatedAt: true
+          updatedAt: true,
+          reviewed_transcript: true
         }
       }
     }
@@ -86,12 +90,38 @@ export const action: ActionFunction = async ({ request }) => {
     const reviewedTasks = user.reviewed.filter(r => r.status === "REVIEWED").length;
     const trashedTasks = user.reviewed.filter(r => r.status === "TRASH").length;
 
+    let syllablesProcessed = 0;
+
+    if (user.role === "ANNOTATOR") {
+      syllablesProcessed = user.modified
+        .filter(
+          (task): task is typeof task & { transcript: string } =>
+            task.transcript !== null
+        )
+        .reduce(
+          (total, task) => total + splitIntoSyllables(task.transcript).length,
+          0
+        );
+    } else {
+      syllablesProcessed = user.reviewed
+        .filter(
+          (task): task is typeof task & { reviewed_transcript: string } =>
+            task.status === "REVIEWED" && task.reviewed_transcript !== null
+        )
+        .reduce(
+          (total, task) =>
+            total + splitIntoSyllables(task.reviewed_transcript).length,
+          0
+        );
+    }
+     
     return {
       username: user.username,
       role: user.role,
       tasksSubmitted: submittedTasks,
       tasksReviewed: reviewedTasks,
-      tasksTrashed: trashedTasks
+      tasksTrashed: trashedTasks,
+      syllablesProcessed
     };
   });
 

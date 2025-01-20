@@ -22,6 +22,7 @@ interface UserStats {
   tasksSubmitted: number;
   tasksReviewed: number;
   tasksTrashed: number;
+  syllablesProcessed: number;
 }
 
 interface ReportsProps {
@@ -187,80 +188,109 @@ export default function Reports({ userStats }: ReportsProps) {
   return (
     <div className="reports-container p-2 sm:p-5">
       <div className="mb-3 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-center mb-3 sm:mb-4">User Statistics Report</h1>
-        
+        <h1 className="text-xl sm:text-2xl font-bold text-center mb-3 sm:mb-4">
+          User Statistics Report
+        </h1>
+
         <div className="w-full flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-6">
           <div className="w-[260px] sm:w-auto">
-          <DateTimePicker
-            label="From"
-            selectedDateTime={fromDateTime}
-            onSelect={(date, hours, minutes) => handleDateTimeSelect('from', date, hours, minutes)}
-          />
+            <DateTimePicker
+              label="From"
+              selectedDateTime={fromDateTime}
+              onSelect={(date, hours, minutes) =>
+                handleDateTimeSelect("from", date, hours, minutes)
+              }
+            />
           </div>
 
           <div className="w-[260px] sm:w-auto">
             <DateTimePicker
-            label="To"
-            selectedDateTime={toDateTime}
-            onSelect={(date, hours, minutes) => handleDateTimeSelect('to', date, hours, minutes)}
-          />
+              label="To"
+              selectedDateTime={toDateTime}
+              onSelect={(date, hours, minutes) =>
+                handleDateTimeSelect("to", date, hours, minutes)
+              }
+            />
+          </div>
         </div>
       </div>
-    </div>
 
-      {fetcher.state === 'loading' && (
+      {fetcher.state === "loading" && (
         <div className="text-center text-gray-500 mt-2 sm:mt-8">
           Loading statistics...
         </div>
       )}
 
-      {!showTable && fetcher.state !== 'loading' && (
+      {!showTable && fetcher.state !== "loading" && (
         <div className="text-center text-gray-500 mt-2 sm:mt-8">
           Please select both start and end dates to view the statistics
         </div>
       )}
 
       {showTable && (
-      <div className="rounded-lg border bg-white shadow overflow-x-auto mt-2 sm:mt-4">
-        <Table>
-          <TableCaption>
-            {fromDateTime && toDateTime ? (
-              `Statistics for ${format(fromDateTime, "MM/dd/yyyy, HH:mm")} to ${format(toDateTime, "MM/dd/yyyy, HH:mm")}`
-            ) : (
-              "Select date and time range to view statistics"
-            )}
-          </TableCaption>
-          
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="w-[200px]">Username</TableHead>
-              <TableHead className="w-[150px]">Role</TableHead>
-              <TableHead className="text-right">Tasks Submitted</TableHead>
-              <TableHead className="text-right">Tasks Reviewed</TableHead>
-              <TableHead className="text-right">Tasks Trashed</TableHead>
-            </TableRow>
-          </TableHeader>
+        <div className="rounded-lg border bg-white shadow overflow-x-auto mt-2 sm:mt-4">
+          <Table>
+            <TableCaption>
+              {fromDateTime && toDateTime
+                ? `Statistics for ${format(
+                    fromDateTime,
+                    "MM/dd/yyyy, HH:mm"
+                  )} to ${format(toDateTime, "MM/dd/yyyy, HH:mm")}`
+                : "Select date and time range to view statistics"}
+            </TableCaption>
 
-          <TableBody>
-            {currentStats.map((stat) => (
-              <TableRow key={stat.username} className="hover:bg-gray-50">
-                <TableCell className="font-medium">{stat.username}</TableCell>
-                <TableCell>{stat.role}</TableCell>
-                <TableCell className="text-right">{stat.tasksSubmitted}</TableCell>
-                <TableCell className="text-right">{stat.tasksReviewed}</TableCell>
-                <TableCell className="text-right">{stat.tasksTrashed}</TableCell>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="w-[200px]">Username</TableHead>
+                <TableHead className="w-[150px]">Role</TableHead>
+                <TableHead className="text-right">Tasks Submitted</TableHead>
+                <TableHead className="text-right">Tasks Reviewed</TableHead>
+                <TableHead className="text-right">Tasks Trashed</TableHead>
+                <TableHead className="text-right">Syllables</TableHead>
               </TableRow>
-            ))}
+            </TableHeader>
 
-            <TableRow className="bg-gray-100 font-semibold">
-              <TableCell colSpan={2}>Total</TableCell>
-              <TableCell className="text-right">{totals.tasksSubmitted}</TableCell>
-              <TableCell className="text-right">{totals.tasksReviewed}</TableCell>
-              <TableCell className="text-right">{totals.tasksTrashed}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
+            <TableBody>
+              {currentStats.map((stat) => (
+                <TableRow key={stat.username} className="hover:bg-gray-50">
+                  <TableCell className="font-medium">{stat.username}</TableCell>
+                  <TableCell>{stat.role}</TableCell>
+                  <TableCell className="text-right">
+                    {stat.tasksSubmitted}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {stat.tasksReviewed}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {stat.tasksTrashed}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {stat.syllablesProcessed}
+                  </TableCell>
+                </TableRow>
+              ))}
+
+              <TableRow className="bg-gray-100 font-semibold">
+                <TableCell colSpan={2}>Total</TableCell>
+                <TableCell className="text-right">
+                  {totals.tasksSubmitted}
+                </TableCell>
+                <TableCell className="text-right">
+                  {totals.tasksReviewed}
+                </TableCell>
+                <TableCell className="text-right">
+                  {totals.tasksTrashed}
+                </TableCell>
+                <TableCell className="text-right">
+                  {currentStats.reduce(
+                    (sum, stat) => sum + stat.syllablesProcessed,
+                    0
+                  )}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );
