@@ -10,14 +10,15 @@ import toast from "react-hot-toast";
 export default function RecordingControlContent() {
   const { user } = useLoaderData();
   const fetcher = useFetcher();
-  
+
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [transcript, setTranscript] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
@@ -26,68 +27,94 @@ export default function RecordingControlContent() {
   const waveSurferRef = useRef<WaveSurfer | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const initializeWaveSurfer = useCallback((url: string) => {
-    if (!waveformRef.current) return;
-
-    if (waveSurferRef.current) {
-      waveSurferRef.current.destroy();
+  const cleanup = useCallback(() => {
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
     }
-
-    waveSurferRef.current = WaveSurfer.create({
-      container: waveformRef.current,
-      waveColor: "blue",
-      progressColor: "blue",
-      height: 80,
-      barWidth: 2,
-      cursorColor: "#1e40af",
-      backend: "WebAudio",
-      minPxPerSec: 50,
-      interact: true,
-    });
-
-    waveSurferRef.current.load(url);
-    waveSurferRef.current.on("finish", () => {
-      if (isLooping) {
-        waveSurferRef.current?.play();
-      } else {
-        setIsPlaying(false);
-      }
-    });
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
+    setIsProcessing(false);
   }, []);
+
+  const initializeWaveSurfer = useCallback(
+    (url: string) => {
+      if (!waveformRef.current) return;
+
+      if (waveSurferRef.current) {
+        waveSurferRef.current.destroy();
+      }
+
+      waveSurferRef.current = WaveSurfer.create({
+        container: waveformRef.current,
+        waveColor: "blue",
+        progressColor: "blue",
+        height: 80,
+        barWidth: 2,
+        cursorColor: "#1e40af",
+        backend: "WebAudio",
+        minPxPerSec: 50,
+        interact: true,
+      });
+
+      waveSurferRef.current.load(url);
+      waveSurferRef.current.on("finish", () => {
+        if (isLooping) {
+          waveSurferRef.current?.play();
+        } else {
+          setIsPlaying(false);
+        }
+      });
+    },
+    [isLooping]
+  );
 
   const stopRecordingHandler = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+    setIsProcessing(true);
+    if (mediaRecorderRef.current?.state === "recording") {
       mediaRecorderRef.current.stop();
-      audioStreamRef.current?.getTracks().forEach(track => track.stop());
-      
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      setIsRecording(false);
+      setTimeout(() => {
+        if (isProcessing) {
+          cleanup();
+          toast.error("Recording process timed out. Please try again.");
+        }
+      }, 3000);
+    } else {
+      cleanup();
     }
-  }, []);
+  }, [cleanup, isProcessing]);
 
   const startRecordingHandler = async () => {
+    cleanup();
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioStreamRef.current = stream;
 
-      let mimeType = 'audio/mp4';
-      if (!MediaRecorder.isTypeSupported('audio/mp4')) {
-        mimeType = 'audio/webm';
+      let mimeType = "audio/mp4";
+      if (!MediaRecorder.isTypeSupported("audio/mp4")) {
+        mimeType = "audio/webm";
       }
 
-      const recorder = new MediaRecorder(stream, { 
-        mimeType
-      });
+      const recorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
 
       recorder.ondataavailable = (e) => {
-        chunksRef.current.push(e.data);
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
       };
 
       recorder.onstop = () => {
@@ -95,40 +122,57 @@ export default function RecordingControlContent() {
           const blob = new Blob(chunksRef.current, { type: mimeType });
           const url = URL.createObjectURL(blob);
           setAudioURL(url);
-          
+          setIsProcessing(false);
+
           setTimeout(() => {
             initializeWaveSurfer(url);
-          }, 100);
+          }, 200);
+        } else {
+          cleanup();
+          toast.error("No audio data was recorded");
         }
+      };
+
+      recorder.onerror = () => {
+        cleanup();
+        toast.error("Recording error occurred");
       };
 
       timeoutRef.current = setTimeout(() => {
         if (recorder.state === "recording") {
           stopRecordingHandler();
           toast("Recording limit reached (15 seconds)", {
-            icon: '⏱️',
+            icon: "⏱️",
           });
         }
       }, 15000);
 
-      recorder.start(1000); 
+      recorder.start(1000);
       setIsRecording(true);
       setRecordingTime(0);
-      
+
       timerRef.current = window.setInterval(() => {
-        setRecordingTime(prev => {
+        setRecordingTime((prev) => {
           const newTime = prev + 1;
-          return newTime <= 15 ? newTime : 15;
+          if (newTime >= 15) {
+            stopRecordingHandler();
+            return 15;
+          }
+          return newTime;
         });
       }, 1000);
-
     } catch (error) {
-      console.error("Microphone access error:", error);
-      toast.error("Unable to access microphone. Please check permissions.");
+      cleanup();
+      if (error instanceof DOMException && error.name === "NotAllowedError") {
+        toast.error("Please allow microphone access and try again");
+      } else {
+        toast.error("Unable to start recording. Please refresh and try again");
+      }
     }
   };
 
   const resetRecordingHandler = () => {
+    cleanup();
     setAudioURL(null);
     setTranscript("");
     setIsPlaying(false);
@@ -149,10 +193,10 @@ export default function RecordingControlContent() {
   const toggleLoop = () => {
     const newLoopState = !isLooping;
     setIsLooping(newLoopState);
-    
+
     if (waveSurferRef.current) {
-      waveSurferRef.current.un('finish');
-      waveSurferRef.current.on('finish', () => {
+      waveSurferRef.current.un("finish");
+      waveSurferRef.current.on("finish", () => {
         if (newLoopState) {
           waveSurferRef.current?.play();
         } else {
@@ -169,23 +213,28 @@ export default function RecordingControlContent() {
       return;
     }
 
-    const formData = new FormData();
-    const audioBlob = await fetch(audioURL).then((res) => res.blob());
-    const file = new File([audioBlob], `${Date.now()}_recording.mp3`, {
-      type: audioBlob.type,
-    });
-    
-    formData.append("file", file);
-    formData.append("transcript", transcript);
-    formData.append("modifiedById", user.id);
+    try {
+      const formData = new FormData();
+      const audioBlob = await fetch(audioURL).then((res) => res.blob());
+      const file = new File([audioBlob], `${Date.now()}_recording.mp3`, {
+        type: audioBlob.type,
+      });
 
-    fetcher.submit(formData, {
-      method: "POST",
-      action: "/api/saveRecording",
-      encType: "multipart/form-data",
-    });
-    
-    resetRecordingHandler();
+      formData.append("file", file);
+      formData.append("transcript", transcript);
+      formData.append("modifiedById", user.id);
+
+      fetcher.submit(formData, {
+        method: "POST",
+        action: "/api/saveRecording",
+        encType: "multipart/form-data",
+      });
+
+      resetRecordingHandler();
+    } catch (error) {
+      console.error("Error submitting recording:", error);
+      toast.error("Failed to save recording. Please try again.");
+    }
   };
 
   return (
@@ -200,15 +249,25 @@ export default function RecordingControlContent() {
                     isRecording
                       ? "bg-red-500 hover:bg-red-600"
                       : "bg-green-500 hover:bg-green-600"
-                  }`}
-                  onClick={isRecording ? stopRecordingHandler : startRecordingHandler}
-                  aria-label={isRecording ? "Stop Recording" : "Start Recording"}
+                  } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
+                  onClick={
+                    isRecording ? stopRecordingHandler : startRecordingHandler
+                  }
+                  disabled={isProcessing}
+                  aria-label={
+                    isRecording ? "Stop Recording" : "Start Recording"
+                  }
                 >
                   <FaMicrophone className="text-4xl" />
                 </button>
                 {isRecording && (
                   <div className="text-lg font-semibold">
                     Recording: {recordingTime}s / 15s
+                  </div>
+                )}
+                {isProcessing && (
+                  <div className="text-sm text-gray-500">
+                    Processing recording...
                   </div>
                 )}
               </div>
@@ -267,3 +326,4 @@ export default function RecordingControlContent() {
     </div>
   );
 }
+
