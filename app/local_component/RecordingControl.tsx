@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 export default function RecordingControlContent() {
   const { user } = useLoaderData();
   const fetcher = useFetcher();
+  const sidebarFetcher = useFetcher();
 
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState<string | null>(null);
@@ -212,28 +213,31 @@ export default function RecordingControlContent() {
       toast.error("Please record audio and add a transcript.");
       return;
     }
-
+  
     try {
       const formData = new FormData();
       const audioBlob = await fetch(audioURL).then((res) => res.blob());
       const file = new File([audioBlob], `${Date.now()}_recording.mp3`, {
         type: audioBlob.type,
       });
-
+  
       formData.append("file", file);
       formData.append("transcript", transcript);
       formData.append("modifiedById", user.id);
-
-      fetcher.submit(formData, {
+      formData.append("userEmail", user.email);
+      formData.append("userRole", user.role);
+  
+      const submit = fetcher.submit(formData, {
         method: "POST",
         action: "/api/saveRecording",
         encType: "multipart/form-data",
       });
-
-      fetcher.load(`/api/history?session=${user.email}&role=${user.role}`);
-
+  
+      await submit;
       resetRecordingHandler();
       toast.success("Recording saved successfully!");
+      
+      await sidebarFetcher.load(`/api/history?session=${user.email}&role=${user.role}`);
     } catch (error) {
       console.error("Error submitting recording:", error);
       toast.error("Failed to save recording. Please try again.");
