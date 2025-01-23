@@ -50,8 +50,16 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   if (!recordings || recordings.length === 0) {
     return new Response(
-      JSON.stringify({ error: "No submissions available" }),
-      { status: 404, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({
+        user: {
+          id: userEmail,
+          submissions: [],
+        },
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
     );
   }
 
