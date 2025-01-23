@@ -41,26 +41,18 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
-        if (sidebarOpen && submissions.length === 0) {
-          setLoading(true); 
-          fetcher.submit(
-            { session: user.email,
-                role: user.role
-             },
-            { method: "get", action: "/api/history" }
-        );
-        hasLoadedOnce.current = true;
-        }
-      }, [sidebarOpen, user.email, user.role, fetcher, submissions.length]);
+      if (sidebarOpen) {
+        setLoading(true);
+        fetcher.load(`/api/history?session=${user.email}&role=${user.role}`);
+      }
+    }, [sidebarOpen, user.email, user.role]);
     
-      useEffect(() => {
-        if (fetcher.state === "idle" && fetcher.data) {
-            console.log("Fetcher data: ", fetcher.data);
-            const fetchedSubmissions = fetcher.data?.user?.submissions || [];
-            setSubmissions(fetchedSubmissions);
-            setLoading(false);
-        }
-      }, [fetcher.state, fetcher.data]);
+    useEffect(() => {
+      if (fetcher.data && fetcher.state === 'idle') {
+        setSubmissions(fetcher.data.user.submissions || []);
+        setLoading(false);
+      }
+    }, [fetcher.data, fetcher.state]);
 
       const handlePlay = (fileUrl: string) => {
         console.log("File URL: ", fileUrl);

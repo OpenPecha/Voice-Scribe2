@@ -230,7 +230,10 @@ export default function RecordingControlContent() {
         encType: "multipart/form-data",
       });
 
+      fetcher.load(`/api/history?session=${user.email}&role=${user.role}`);
+
       resetRecordingHandler();
+      toast.success("Recording saved successfully!");
     } catch (error) {
       console.error("Error submitting recording:", error);
       toast.error("Failed to save recording. Please try again.");
